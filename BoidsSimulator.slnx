@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="BoidsSimulator.vcxproj" Id="60b02549-63ac-4c41-9da5-b7efdc795745" />
+</Solution>
