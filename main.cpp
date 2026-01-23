@@ -28,12 +28,14 @@ public:
 	std::vector<float> ax;
 	std::vector<float> ay;
 	std::vector<SDL_Vertex> vertices;
+	std::vector<SDL_FRect> sights;
 	std::vector<float> distances;
 	std::vector<float> distancesX;
 	std::vector<float> distancesY;
 	boids(int boidC);
 	float getDistance(float x1, float y1, float x2, float y2);
 	void updateDistances();
+	void updateSight();
 	void updateAcceleration();
 	void updateAlign();
 	void updateVectices();
@@ -45,6 +47,7 @@ private:
 boids::boids(int boidC)
 {
 	SDL_Vertex temp{};
+	SDL_FRect sight{};
 	count = boidC;
 	temp.color = defaultColor;
 	
@@ -68,6 +71,11 @@ boids::boids(int boidC)
 		{
 			vertices.push_back(temp);	// init vertices
 		}
+		sight.w = h * 3;
+		sight.h = h * 3;
+		sight.x = midX[i] - (sight.w / 2);
+		sight.y = midY[i] - (sight.h / 2 * 3);
+		sights.push_back(sight);
 	}
 	
 	distances.resize(count * count);
@@ -96,6 +104,15 @@ void boids::updateDistances()
 		}
 	}
 	return;
+}
+
+void boids::updateSight()
+{
+	for (int i = 0; i < count; i++)
+	{
+		sights[i].x = midX[i] - (sights[i].w / 2);
+		sights[i].y = midY[i] - (sights[i].h / 2);
+	}
 }
 
 void boids::updateAcceleration()
@@ -212,15 +229,15 @@ void boids::makeVertices()
 
 		vertices[3*i].position.x = midX[i] + h * SDL_cosf(theta);									// P1x
 		vertices[3*i].position.y = midY[i] + h * SDL_sinf(theta);									// P1y
-		vertices[3 * i].color = { 1.0, 0.0, 0.0, 1.0 };		// It sets boids rainbow
+		//vertices[3 * i].color = { 1.0, 0.0, 0.0, 1.0 };		// It sets boids rainbow
 		
 		vertices[3*i+1].position.x = midX[i] + w / 2 * SDL_cosf(theta + (SDL_PI_F / 2.f));			// P2x
 		vertices[3*i+1].position.y = midY[i] + w / 2 * SDL_sinf(theta + (SDL_PI_F / 2.f));			// P2y
-		vertices[3 * i + 1].color = { 0.0, 1.0, 0.0, 1.0 };	// It sets boids rainbow
+		//vertices[3 * i + 1].color = { 0.0, 1.0, 0.0, 1.0 };	// It sets boids rainbow
 
 		vertices[3*i+2].position.x = midX[i] + w / 2 * SDL_cosf(theta + (SDL_PI_F / 2.f * 3.f));		// P3x
 		vertices[3*i+2].position.y = midY[i] + w / 2 * SDL_sinf(theta + (SDL_PI_F / 2.f * 3.f));		// p3y
-		vertices[3 * i + 2].color = { 0.0, 0.0, 1.0, 1.0 };	// It sets boids rainbow
+		//vertices[3 * i + 2].color = { 0.0, 0.0, 1.0, 1.0 };	// It sets boids rainbow
 	}
 
 	return;
@@ -230,7 +247,7 @@ void boids::makeVertices()
 
 int main(int argc, char** argv)
 {
-	boids Boids(50);
+	boids Boids(10);
 	SDL_Window* window = NULL;
 	SDL_Renderer* renderer = NULL;
 	SDL_Event event;
@@ -269,6 +286,7 @@ int main(int argc, char** argv)
 		}
 
 		Boids.updateDistances();
+		Boids.updateSight();
 		Boids.updateAcceleration();
 		// Boids.updateAlign();
 
@@ -276,6 +294,9 @@ int main(int argc, char** argv)
 		Boids.makeVertices();
 
 		SDL_RenderClear(renderer);
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 0);
+		SDL_RenderRects(renderer, Boids.sights.data(), Boids.count);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 		SDL_RenderGeometry(renderer, NULL, Boids.vertices.data(), Boids.count * 3, NULL, 0);
 		SDL_RenderPresent(renderer);
 	}
