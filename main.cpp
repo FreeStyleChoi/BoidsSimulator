@@ -1,3 +1,6 @@
+#define DELTA 0.01
+#define MAXSPEED 0.001
+
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <vector>
@@ -7,6 +10,7 @@
 // TODO topX, Y 만들어서 밀고 땡기는게 더 정확하게 만들기
 
 const SDL_Rect windowRect{ 0, 0, 1280, 720 };
+const float dt = 0.1;
 
 class boids
 {
@@ -31,7 +35,8 @@ public:
 	float getDistance(float x1, float y1, float x2, float y2);
 	void updateDistances();
 	void updateAcceleration();
-	void updateVectices(float dt);
+	void updateAlign();
+	void updateVectices();
 	void makeVertices();
 private:
 
@@ -103,20 +108,75 @@ void boids::updateAcceleration()
 		{
 			if (i != j)
 			{
-				ax[i] += distancesX[count * i + j] / powf(distances[count * i + j], 3.f);
-				ay[i] += distancesY[count * i + j] / powf(distances[count * i + j], 3.f);
+				ax[i] -= distancesX[count * i + j] / powf(distances[count * i + j], 3.f) + distancesX[count * i + j] / powf(distances[count * i + j], 2.f);
+				ay[i] -= distancesY[count * i + j] / powf(distances[count * i + j], 3.f) + distancesY[count * i + j] / powf(distances[count * i + j], 2.f);
 
 			}
 		}
 	}
 }
 
-void boids::updateVectices(float dt)
+void boids::updateAlign()
+{
+	float averageSpeedx = 0;
+	float averageSpeedy = 0;
+
+	for (int i = 0; i < count; i++)
+	{
+		averageSpeedx += vx[i]; 
+		averageSpeedy += vy[i];
+	}
+	averageSpeedx = averageSpeedx / float(count);
+	averageSpeedy = averageSpeedy / float(count);
+
+	for (int i = 0; i < count; i++)
+	{
+		if (vx[i] > averageSpeedx + DELTA || vx[i] < averageSpeedx - DELTA) // equal to vx[i] != averageSpeedx
+		{
+			if (vx[i] < averageSpeedx)
+			{
+				ax[i] += averageSpeedx * 0.1; // align speed
+			}
+			else if (vx[i] > averageSpeedx)
+			{
+				ax[i] -= averageSpeedx * 0.1; // align speed
+			}
+		}
+		else
+		{
+			ax[i] = 0;
+		}
+		
+		if (vy[i] > averageSpeedy + DELTA || vy[i] < averageSpeedy - DELTA) // equal to vy[i] != averageSpeedx
+		{
+			if (vy[i] < averageSpeedy)
+			{
+				ay[i] += averageSpeedy * 0.01; // align speed
+			}
+			else if (vy[i] > averageSpeedy)
+			{
+				ay[i] -= averageSpeedy * 0.01; // align speed
+			}
+		}
+		else
+		{
+			ay[i] = 0;
+		}
+	}
+	
+}
+
+void boids::updateVectices()
 {
 	for (int i = 0; i < count; i++)
 	{
 		vx[i] += ax[i] * dt;
 		vy[i] += ay[i] * dt;
+		if (vx[i] > MAXSPEED)
+		{
+			ax[i] = ax[i] / -10;
+			ay[i] = ay[i] / -10;
+		}
 		midX[i] += vx[i] * dt;
 		midY[i] += vy[i] * dt;
 		
@@ -152,24 +212,24 @@ void boids::makeVertices()
 
 		vertices[3*i].position.x = midX[i] + h * SDL_cosf(theta);									// P1x
 		vertices[3*i].position.y = midY[i] + h * SDL_sinf(theta);									// P1y
-		//vertices[3 * i].color = { 1.0, 0.0, 0.0, 1.0 };		// It sets boids rainbow
+		vertices[3 * i].color = { 1.0, 0.0, 0.0, 1.0 };		// It sets boids rainbow
 		
 		vertices[3*i+1].position.x = midX[i] + w / 2 * SDL_cosf(theta + (SDL_PI_F / 2.f));			// P2x
 		vertices[3*i+1].position.y = midY[i] + w / 2 * SDL_sinf(theta + (SDL_PI_F / 2.f));			// P2y
-		//vertices[3 * i + 1].color = { 0.0, 1.0, 0.0, 1.0 };	// It sets boids rainbow
+		vertices[3 * i + 1].color = { 0.0, 1.0, 0.0, 1.0 };	// It sets boids rainbow
 
 		vertices[3*i+2].position.x = midX[i] + w / 2 * SDL_cosf(theta + (SDL_PI_F / 2.f * 3.f));		// P3x
 		vertices[3*i+2].position.y = midY[i] + w / 2 * SDL_sinf(theta + (SDL_PI_F / 2.f * 3.f));		// p3y
-		//vertices[3 * i + 2].color = { 0.0, 0.0, 1.0, 1.0 };	// It sets boids rainbow
+		vertices[3 * i + 2].color = { 0.0, 0.0, 1.0, 1.0 };	// It sets boids rainbow
 	}
 
 	return;
 }
 
 
+
 int main(int argc, char** argv)
 {
-	float dt = 0.1;
 	boids Boids(50);
 	SDL_Window* window = NULL;
 	SDL_Renderer* renderer = NULL;
@@ -210,7 +270,9 @@ int main(int argc, char** argv)
 
 		Boids.updateDistances();
 		Boids.updateAcceleration();
-		Boids.updateVectices(dt);
+		// Boids.updateAlign();
+
+		Boids.updateVectices();
 		Boids.makeVertices();
 
 		SDL_RenderClear(renderer);
