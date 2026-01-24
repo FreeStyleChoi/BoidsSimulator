@@ -6,8 +6,7 @@
 #include <vector>
 #include <random>
 
-// 커밋 메세지: 가속도, 힘 추가, 이동방향 == 앵글
-// TODO topX, Y 만들어서 밀고 땡기는게 더 정확하게 만들기
+// TODO 원래 가속도 있는거 다시 살리고 디스턴스 일정한 범위 내에서만 가속도가 동작하게 만들기 (151번줄 if문)
 
 const SDL_Rect windowRect{ 0, 0, 1280, 720 };
 const float dt = 0.1;
@@ -33,12 +32,14 @@ public:
 	std::vector<float> distancesX;
 	std::vector<float> distancesY;
 	boids(int boidC);
-	float getDistance(float x1, float y1, float x2, float y2);
-	void updateDistances();
+	bool checkCollision(SDL_FRect R1, SDL_FRect R2);
+	float getDistance(float x1, float y1, float x2, float y2);	//old
+	void updateDistances();		// old
 	void updateSight();
-	void updateAcceleration();
-	void updateAlign();
-	void updateVectices();
+	void updateSeperation();
+	void updateAcceleration();	// old
+	void updateAlign();			// old
+	void updateVectices();		// old
 	void makeVertices();
 private:
 
@@ -83,6 +84,15 @@ boids::boids(int boidC)
 	distancesY.resize(count * count);
 }
 
+bool boids::checkCollision(SDL_FRect R1, SDL_FRect R2)
+{
+	if (R1.x < R2.x + R2.w || R1.x + R1.w > R2.x || R1.y < R2.y + R2.h || R1.y + R1.h > R2.y)
+	{
+		return true;
+	}
+	return false;
+}
+
 float boids::getDistance(float x1, float y1, float x2, float y2)
 {
 	float dx = x2 - x1;
@@ -112,6 +122,21 @@ void boids::updateSight()
 	{
 		sights[i].x = midX[i] - (sights[i].w / 2);
 		sights[i].y = midY[i] - (sights[i].h / 2);
+	}
+}
+
+void boids::updateSeperation()
+{
+	for (int i = 0; i < count; i++)
+	{
+		for (int j = 0; j < count; j++)
+		{
+			if (checkCollision(sights[i], sights[j]))
+			{
+				vx[i] -= sights[i].x - sights[j].x;
+				vy[i] -= sights[i].y - sights[j].y;
+			}
+		}
 	}
 }
 
@@ -187,16 +212,11 @@ void boids::updateVectices()
 {
 	for (int i = 0; i < count; i++)
 	{
-		vx[i] += ax[i] * dt;
-		vy[i] += ay[i] * dt;
-		if (vx[i] > MAXSPEED)
-		{
-			ax[i] = ax[i] / -10;
-			ay[i] = ay[i] / -10;
-		}
+
+		vx[i] += ax[i];
+		vy[i] += ay[i];
 		midX[i] += vx[i] * dt;
 		midY[i] += vy[i] * dt;
-		
 		angle[i] = SDL_atan2f(vy[i], vx[i]);
 
 		if (midX[i] > windowRect.w)
@@ -287,7 +307,8 @@ int main(int argc, char** argv)
 
 		Boids.updateDistances();
 		Boids.updateSight();
-		Boids.updateAcceleration();
+		Boids.updateSeperation();
+		//Boids.updateAcceleration();
 		// Boids.updateAlign();
 
 		Boids.updateVectices();
