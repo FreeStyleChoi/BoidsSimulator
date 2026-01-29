@@ -183,6 +183,7 @@ void boids::updateAlign()
 
 void boids::updateMigration()
 {
+	const float dt = 0.01f;	// dt = 0.01 이 가장 좋은 값
 	const float migrationChance = 0.004f; // 이탈 발생 확률 (낮게 설정)
 	const float migrationForce = 1.2f;    // 새로운 무리로 향하는 힘
 
@@ -228,49 +229,6 @@ void boids::updateMigration()
 
 void boids::updateVectices()
 {
-	/* ORIGINAL */
-	//for (int i = 0; i < count; i++)
-	//{
-	//	vx[i] += ax[i] * dt;
-	//	vy[i] += ay[i] * dt;
-	//	//if (vx[i] > MAXSPEED)
-	//	//{
-	//	//	vx[i] -= 5;
-	//	//}
-	//	//else if (vx[i] < MAXSPEED)
-	//	//{
-	//	//	vx[i] += 5;
-	//	//}
-	//	//if (vy[i] > MAXSPEED)
-	//	//{
-	//	//	vy[i] -= 5;
-	//	//}
-	//	//else if (vy[i] < MAXSPEED)
-	//	//{
-	//	//	vy[i] += 5;
-	//	//}
-	//	midX[i] += vx[i] * dt;
-	//	midY[i] += vy[i] * dt;
-	//	
-	//	angle[i] = SDL_atan2f(vy[i], vx[i]);
-
-	//	if (midX[i] > windowRect.w)
-	//	{
-	//		midX[i] -= windowRect.w;
-	//	}
-	//	if (midX[i] < 0)
-	//	{
-	//		midX[i] += windowRect.w;
-	//	}
-	//	if (midY[i] > windowRect.h)
-	//	{
-	//		midY[i] -= windowRect.h;
-	//	}
-	//	if (midY[i] < 0)
-	//	{
-	//		midY[i] += windowRect.h;
-	//	}
-	//}
 
 	/* GEMINI #1 */
 	const float targetSpeed = 3.0f; // 원하는 이동 속도 (너무 빠르면 줄이세요)
