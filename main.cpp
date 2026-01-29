@@ -1,8 +1,4 @@
-#define DELTA 0.01
-#define MAXSPEED 0.001
-
 #include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
 #include <vector>
 #include <random>
 
@@ -10,7 +6,7 @@
 // TODO topX, Y 만들어서 밀고 땡기는게 더 정확하게 만들기
 
 const SDL_Rect windowRect{ 0, 0, 1280, 720 };
-const float dt = 0.1;
+const float dt = 0.1f;
 
 class boids
 {
@@ -18,11 +14,12 @@ public:
 	float w = 10.f;
 	float h = 20.f;
 	int count;
+	float v0 = 1.f;
 	SDL_FColor defaultColor = { 1.0f, 0.84f, 0.0f, 1.0f };
 	std::vector<float> midX;
 	std::vector<float> midY;
 	std::vector<float> angle;
-	std::vector<float> v0;
+	
 	std::vector<float> vx;
 	std::vector<float> vy;
 	std::vector<float> ax;
@@ -50,7 +47,6 @@ boids::boids(int boidC)
 	SDL_Vertex temp{};
 	count = boidC;
 	temp.color = defaultColor;
-	
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<int> genX(w, windowRect.w - w);
@@ -62,9 +58,8 @@ boids::boids(int boidC)
 		midX.push_back(genX(gen));
 		midY.push_back(genY(gen));
 		angle.push_back(genangle(gen));
-		v0.push_back(1.f);
-		vx.push_back(v0[i] * SDL_cosf(angle[i]));
-		vy.push_back(v0[i] * SDL_sinf(angle[i]));
+		vx.push_back(v0 * SDL_cosf(angle[i]));
+		vy.push_back(v0 * SDL_sinf(angle[i]));
 		ax.push_back(0.f);
 		ay.push_back(0.f);
 		isMigrating.push_back(false);
@@ -105,49 +100,6 @@ void boids::updateDistances()
 
 void boids::updateAcceleration()
 {
-	/* ORIGINAL */
-	//float sigma = 0.5f;
-	//float seperationRatex = 0.f;
-	//float seperationRatey = 0.f;
-	//float cohesionRatex = 0.f;
-	//float cohesionRatey = 0.f;
-
-	//std::fill(ax.begin(), ax.end(), 0);
-	//std::fill(ay.begin(), ay.end(), 0);
-
-	//for (int i = 0; i < count; i++)
-	//{
-	//	for (int j = 0; j < count; j++)
-	//	{
-	//		if (i != j && 1 < distances[count * i + j] && distances[count * i + j] < 80)
-	//		{
-	//			ax[i] += ( - 1 * distancesX[count * i + j] / powf(distances[count * i + j], 12.f) ) + ( distancesX[count * i + j] / powf(distances[count * i + j], 6.f));
-	//			ay[i] += ( - 1 * distancesY[count * i + j] / powf(distances[count * i + j], 12.f) ) + ( distancesY[count * i + j] / powf(distances[count * i + j], 6.f));
-	//			if (distances[count * i + j] < sigma)
-	//			{
-	//				ax[i] += (seperationRate * distancesX[count * i + j] + 0.f) * w;
-	//				ay[i] += (seperationRate * distancesY[count * i + j] + 0.f) * w;
-	//			}
-	//			if (sigma <= distances[count * i + j] && distances[count * i + j] < sigma*2)
-	//			{
-	//				ax[i] += (cohesionRate * distancesX[count * i + j] + 5.f) * w;
-	//				ay[i] += (cohesionRate * distancesY[count * i + j] + 5.f) * w;
-	//			}
-	//			
-	//			seperationRatex = powf(0.1f / distancesX[count * i + j], 12);	// 12-6 potential
-	//			cohesionRatex = powf(0.1f / distancesX[count * i + j], 6);
-	//			ax[i] = 4 * (seperationRatex - cohesionRatex);
-
-	//			seperationRatey = powf(0.1f / distancesY[count * i + j], 12);	// 12-6 potential
-	//			cohesionRatey = powf(0.1f / distancesY[count * i + j], 6);
-	//			ax[i] = 4 * (seperationRatey - cohesionRatey);
-
-
-	//		}
-	//	}
-	//}
-
-
 	/* GEMINI #3 */
 	// --- 파라미터 조정 포인트 ---
 	const float sigma = 25.0f;    // 척력 범위를 좁힘 (기존 25.0 -> 20.0)
@@ -195,53 +147,6 @@ void boids::updateAcceleration()
 
 void boids::updateAlign()
 {
-	/* ORIGINAL */
-	//float averageSpeedx = 0;
-	//float averageSpeedy = 0;
-
-	//for (int i = 0; i < count; i++)
-	//{
-	//	averageSpeedx += vx[i]; 
-	//	averageSpeedy += vy[i];
-	//}
-	//averageSpeedx = averageSpeedx / float(count);
-	//averageSpeedy = averageSpeedy / float(count);
-
-	//for (int i = 0; i < count; i++)
-	//{
-	//	if (vx[i] > averageSpeedx + DELTA || vx[i] < averageSpeedx - DELTA) // equal to vx[i] != averageSpeedx
-	//	{
-	//		if (vx[i] < averageSpeedx)
-	//		{
-	//			ax[i] += averageSpeedx * 0.1; // align speed
-	//		}
-	//		else if (vx[i] > averageSpeedx)
-	//		{
-	//			ax[i] -= averageSpeedx * 0.1; // align speed
-	//		}
-	//	}
-	//	else
-	//	{
-	//		ax[i] = 0;
-	//	}
-	//	
-	//	if (vy[i] > averageSpeedy + DELTA || vy[i] < averageSpeedy - DELTA) // equal to vy[i] != averageSpeedx
-	//	{
-	//		if (vy[i] < averageSpeedy)
-	//		{
-	//			ay[i] += averageSpeedy * 0.01; // align speed
-	//		}
-	//		else if (vy[i] > averageSpeedy)
-	//		{
-	//			ay[i] -= averageSpeedy * 0.01; // align speed
-	//		}
-	//	}
-	//	else
-	//	{
-	//		ay[i] = 0;
-	//	}
-	//}
-
 	/* GEMINI #4 */
 	const float alignRadius = 150.0f;
 	const float alignStrength = 0.5f; // 강도를 조금 더 높여서 반응성 개선
@@ -278,7 +183,6 @@ void boids::updateAlign()
 
 void boids::updateMigration()
 {
-	const float dt = 0.01f;
 	const float migrationChance = 0.004f; // 이탈 발생 확률 (낮게 설정)
 	const float migrationForce = 1.2f;    // 새로운 무리로 향하는 힘
 
@@ -370,7 +274,6 @@ void boids::updateVectices()
 
 	/* GEMINI #1 */
 	const float targetSpeed = 3.0f; // 원하는 이동 속도 (너무 빠르면 줄이세요)
-	const float dt = 0.1f;
 
 	for (int i = 0; i < count; i++)
 	{
